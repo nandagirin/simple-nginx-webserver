@@ -51,8 +51,8 @@ module "iam_github_oidc_provider" {
   version = "~> 5.0"
 }
 
-resource "aws_iam_policy" "s3_push_policy" {
-  name = "GitHubActionsS3PushPolicy"
+resource "aws_iam_policy" "gh_actions_s3_policy" {
+  name = "GitHubActionsS3Policy"
 
   policy = jsonencode({
     Version = "2012-10-17",
@@ -74,8 +74,8 @@ resource "aws_iam_policy" "s3_push_policy" {
   })
 }
 
-resource "aws_iam_policy" "ssm_update_policy" {
-  name = "GitHubActionsSSMUpdatePolicy"
+resource "aws_iam_policy" "gh_actions_ssm_policy" {
+  name = "GitHubActionsSSMPolicy"
 
   policy = jsonencode({
     Version = "2012-10-17",
@@ -91,7 +91,7 @@ resource "aws_iam_policy" "ssm_update_policy" {
   })
 }
 
-resource "aws_iam_policy" "code_deploy_policy" {
+resource "aws_iam_policy" "gh_actions_code_deploy_policy" {
   name = "GitHubActionsCodeDeployPolicy"
 
   policy = jsonencode({
@@ -112,6 +112,21 @@ resource "aws_iam_policy" "code_deploy_policy" {
   })
 }
 
+resource "aws_iam_policy" "gh_actions_ecs_policy" {
+  name = "GitHubActionsECSPolicy"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow",
+        Action   = "ecs:DescribeTaskDefinition"
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 module "iam_github_oidc_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-github-oidc-role"
   version = "~> 5.0"
@@ -120,9 +135,10 @@ module "iam_github_oidc_role" {
   subjects = ["nandagirin/simple-nginx-webserver:*"]
 
   policies = {
-    GitHubActionsS3PushPolicy     = aws_iam_policy.s3_push_policy.arn
-    GitHubActionsSSMUpdatePolicy  = aws_iam_policy.ssm_update_policy.arn
-    GitHubActionsCodeDeployPolicy = aws_iam_policy.code_deploy_policy.arn
+    GitHubActionsS3Policy         = aws_iam_policy.gh_actions_s3_policy.arn
+    GitHubActionsSSMPolicy        = aws_iam_policy.gh_actions_ssm_policy.arn
+    GitHubActionsCodeDeployPolicy = aws_iam_policy.gh_actions_code_deploy_policy.arn
+    GitHubActionsECSPolicy        = aws_iam_policy.gh_actions_ecs_policy.arn
   }
 
   tags = {
