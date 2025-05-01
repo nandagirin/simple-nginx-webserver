@@ -4,7 +4,7 @@ data "terraform_remote_state" "infra_foundation" {
     allowed_account_ids = ["054183072154"]
     region              = "ap-southeast-1"
     bucket              = "test-account-terraform-state-backend"
-    key                 = "infrastructure/terraform/staging/infra-foundation"
+    key                 = "infrastructure/terraform/production/infra-foundation"
     profile             = "test-account"
   }
 }

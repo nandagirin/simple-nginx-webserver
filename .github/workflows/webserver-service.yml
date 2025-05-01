@@ -1,0 +1,42 @@
+---
+name: Webserver Service
+
+on:
+  push:
+    tags:
+      - webserver-v*
+    branches:
+      - main
+    paths:
+      - services/webserver/**
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  staging:
+    name: Push and Deploy Staging
+    uses: ./.github/workflows/push-and-deploy.yaml
+    if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+    with:
+      service: webserver
+      s3_bucket_name: webserver-staging-s3
+      ecs_task_definition: webserver-staging
+      ssm_config_html_path: /ecs/staging/webserver-staging/s3-html-path
+      code_deploy_app_name: webserver-staging
+      code_deploy_deployment_group: webserver-staging
+      code_deploy_appspec_filename: appspec-staging.yaml
+
+  production:
+    name: Push and Deploy Production
+    uses: ./.github/workflows/push-and-deploy.yaml
+    if: ${{ github.event_name == 'push' && github.ref_name != 'main' }}
+    with:
+      service: webserver
+      s3_bucket_name: webserver-prod-s3
+      ecs_task_definition: webserver-prod
+      ssm_config_html_path: /ecs/prod/webserver-prod/s3-html-path
+      code_deploy_app_name: webserver-prod
+      code_deploy_deployment_group: webserver-prod
+      code_deploy_appspec_filename: appspec-prod.yaml
