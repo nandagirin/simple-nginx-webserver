@@ -10,7 +10,7 @@ on:
 
 jobs:
   staging:
-    uses: ./.github/workflows/composites/staging.yaml
+    uses: ./.github/workflows/staging.yaml
     if: ${{ github.event_name == 'pull_request' }}
     with:
       service: webserver
