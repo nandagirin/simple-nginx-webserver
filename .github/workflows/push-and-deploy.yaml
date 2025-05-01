@@ -30,6 +30,9 @@ on:
       code_deploy_deployment_group:
         required: true
         type: string
+      code_deploy_appspec_filename:
+        type: string
+        default: appspec.yaml
 
 permissions:
   id-token: write
@@ -106,5 +109,5 @@ jobs:
           aws deploy create-deployment \
             --application-name ${{ inputs.code_deploy_app_name }} \
             --deployment-group-name ${{ inputs.code_deploy_deployment_group }} \
-            --s3-location bucket=${{ inputs.s3_bucket_name }},key=${{ github.sha }}/appspec.yaml,bundleType=YAML
+            --s3-location bucket=${{ inputs.s3_bucket_name }},key=${{ github.sha }}/${{ inputs.code_deploy_appspec_filename }},bundleType=YAML
 

@@ -24,3 +24,4 @@ jobs:
       ssm_config_html_path: /ecs/staging/webserver-staging/s3-html-path
       code_deploy_app_name: webserver-staging
       code_deploy_deployment_group: webserver-staging
+      code_deploy_appspec_filename: appspec-staging.yaml
