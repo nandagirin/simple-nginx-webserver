@@ -97,10 +97,9 @@ jobs:
           
           echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
 
-      - uses: chrisdickinson/setup-yq@latest
       - name: Render appspec.yaml using yq
-        run: |
-          yq --help
+        uses: mikefarah/yq@v4
+        cmd: yq -i ".Resources.0.TargetService.Properties.TaskDefinition = \"$TASK_DEF_ARN"\" './appspec.yaml'
 
       - name: Trigger CodeDeploy deployment
         run: |
