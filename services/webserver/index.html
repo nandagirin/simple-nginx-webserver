@@ -1,26 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome to ECS</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome</title>
   <style>
     body {
       font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f0f8ff;
+    }
+
+    .container {
       text-align: center;
-      padding: 3rem;
-      background-color: #f8f9fa;
+      background-color: #fff;
+      padding: 50px;
+      border-radius: 15px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      width: 300px;
     }
+
     h1 {
-      color: #007acc;
+      color: #4CAF50;
+      font-size: 2.5em;
+      margin: 0;
+      padding-bottom: 20px;
     }
+
     p {
-      color: #555;
+      color: #333;
+      font-size: 1.2em;
+      margin: 0;
     }
+
+    .box {
+      margin-top: 20px;
+      padding: 15px;
+      border: 2px solid #4CAF50;
+      border-radius: 10px;
+      background-color: #e7f5e5;
+      font-weight: bold;
+    }
+
   </style>
 </head>
 <body>
-  <h1>Welcome to Your ECS App</h1>
-  <p>This page is served from a container running on ECS Fargate with HTML from S3.</p>
+
+  <div class="container">
+    <h1>Welcome!</h1>
+    <p>We're happy to see you here.</p>
+    <div class="box">
+      Special message: You're amazing!
+    </div>
+  </div>
+
 </body>
 </html>
