@@ -1,0 +1,17 @@
+---
+name: Webserver Service
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - services/webserver/**
+
+jobs:
+  staging:
+    uses: ./.github/workflows/composites/staging.yaml
+    if: ${{ github.event_name == 'pull_request' }}
+    with:
+      service: webserver
+      s3_bucket_name: webserver-staging-s3

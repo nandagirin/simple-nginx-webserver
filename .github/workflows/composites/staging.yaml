@@ -1,0 +1,42 @@
+name: Staging Workflow
+
+on:
+  workflow_call:
+    inputs:
+      aws_github_actions_role:
+        type: string
+        default: arn:aws:iam::054183072154:role/GitHubActionsRole
+      aws_region:
+        type: string
+        default: ap-southeast-1
+      service:
+        required: true
+        type: string
+      s3_bucket_name:
+        required: true
+        type: string
+
+jobs:
+  push-to-s3:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: services/${{ inputs.service }}
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ inputs.aws_github_actions_role }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Push to S3
+        run: aws s3 cp ./index.html s3://${{ inputs.s3_bucket_name }}/${{ github.sha }}/index.html
