@@ -109,7 +109,7 @@ jobs:
                     LoadBalancerInfo:
                       ContainerName: ${{ inputs.service }}
                       ContainerPort: ${{ inputs.service_port }}
-            EOF
+          EOF
 
       - name: Trigger CodeDeploy deployment
         run: |
