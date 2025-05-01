@@ -14,8 +14,13 @@ permissions:
 
 jobs:
   staging:
-    uses: ./.github/workflows/staging.yaml
+    name: Push and Deploy Staging
+    uses: ./.github/workflows/push-and-deploy.yaml
     if: ${{ github.event_name == 'pull_request' }}
     with:
       service: webserver
       s3_bucket_name: webserver-staging-s3
+      ecs_task_definition: webserver-staging
+      ssm_config_html_path: /ecs/staging/webserver-staging/s3-html-path
+      code_deploy_app_name: webserver-staging
+      code_deploy_deployment_group: webserver-staging

@@ -1,0 +1,121 @@
+name: Push and Deploy Workflow
+
+on:
+  workflow_call:
+    inputs:
+      aws_github_actions_role:
+        type: string
+        default: arn:aws:iam::054183072154:role/GitHubActionsRole
+      aws_region:
+        type: string
+        default: ap-southeast-1
+      service:
+        required: true
+        type: string
+      service_port:
+        type: string
+        default: 80
+      s3_bucket_name:
+        required: true
+        type: string
+      ecs_task_definition:
+        required: true
+        type: string
+      ssm_config_html_path:
+        required: true
+        type: string
+      code_deploy_app_name:
+        required: true
+        type: string
+      code_deploy_deployment_group:
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  push-to-s3:
+    name: Push to S3 Bucket
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: services/${{ inputs.service }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ inputs.aws_github_actions_role }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Push to S3
+        run: aws s3 cp ./index.html s3://${{ inputs.s3_bucket_name }}/${{ github.sha }}/index.html
+  
+  deploy:
+    name: Trigger CodeDeploy Deployment
+    runs-on: ubuntu-latest
+    environment: staging
+
+    defaults:
+      run:
+        working-directory: services/${{ inputs.service }}
+    
+    needs: push-to-s3
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ inputs.aws_github_actions_role }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Update SSM Parameter
+        run: |
+          aws ssm put-parameter \
+            --name "${{ inputs.ssm_config_html_path }}" \
+            --value "${{ github.sha }}/index.html" \
+            --type "String" \
+            --overwrite
+
+      - name: Get latest ECS task definition
+        id: taskdef
+        run: |
+          FAMILY_NAME="${{ inputs.ecs_task_definition }}"
+          TASK_DEF_ARN=$(aws ecs describe-task-definition \
+            --task-definition $FAMILY_NAME \
+            --query "taskDefinition.taskDefinitionArn" \
+            --output text)
+          
+          echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
+
+      - name: Render appspec.yaml
+        run: |
+          cat > appspec.yaml <<EOF
+            version: 1
+            Resources:
+              - TargetService:
+                  Type: AWS::ECS::Service
+                  Properties:
+                    TaskDefinition: ${{ env.TASK_DEF_ARN }}
+                    LoadBalancerInfo:
+                      ContainerName: ${{ inputs.service }}
+                      ContainerPort: ${{ inputs.service_port }}
+            EOF
+
+      - name: Trigger CodeDeploy deployment
+        run: |
+          aws deploy create-deployment \
+            --application-name ${{ inputs.code_deploy_app_name }} \
+            --deployment-group-name ${{ inputs.code_deploy_deployment_group }} \
+            --revision revisionType=AppSpecContent,appSpecContent="{\"content\":\"$(base64 appspec.yaml | tr -d '\n')\",\"sha256\":\"$(shasum -a 256 appspec.yaml | awk '{print $1}')\"}" \
+            --file-exists-behavior OVERWRITE
+
