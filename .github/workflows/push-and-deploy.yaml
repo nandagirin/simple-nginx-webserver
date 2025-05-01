@@ -116,6 +116,5 @@ jobs:
           aws deploy create-deployment \
             --application-name ${{ inputs.code_deploy_app_name }} \
             --deployment-group-name ${{ inputs.code_deploy_deployment_group }} \
-            --revision revisionType=AppSpecContent,appSpecContent={content="$(base64 -w 0 appspec.yaml)"} \
-            --file-exists-behavior OVERWRITE
+            --revision revisionType=AppSpecContent,appSpecContent={content="$(base64 -w 0 appspec.yaml)"}
 

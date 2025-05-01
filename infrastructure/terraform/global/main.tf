@@ -103,6 +103,7 @@ resource "aws_iam_policy" "gh_actions_code_deploy_policy" {
           "codedeploy:CreateDeployment",
           "codedeploy:GetDeployment",
           "codedeploy:GetDeploymentGroup",
+          "codedeploy:GetDeploymentConfig",
           "codedeploy:GetApplication",
           "codedeploy:RegisterApplicationRevision",
         ],
