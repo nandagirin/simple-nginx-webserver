@@ -53,9 +53,24 @@ jobs:
         with:
           role-to-assume: ${{ inputs.aws_github_actions_role }}
           aws-region: ${{ inputs.aws_region }}
+      
+      - name: Get latest ECS task definition
+        id: taskdef
+        run: |
+          FAMILY_NAME="${{ inputs.ecs_task_definition }}"
+          TASK_DEF_ARN=$(aws ecs describe-task-definition \
+            --task-definition $FAMILY_NAME \
+            --query "taskDefinition.taskDefinitionArn" \
+            --output text)
+          
+          echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
 
-      - name: Push to S3
-        run: aws s3 cp ./index.html s3://${{ inputs.s3_bucket_name }}/${{ github.sha }}/index.html
+      - name: Render appspec.yaml using yq
+        run: |
+          yq -i ".Resources.0.TargetService.Properties.TaskDefinition = \"$TASK_DEF_ARN\"" appspec.yaml
+
+      - name: Push artifacts to S3
+        run: aws s3 cp ./* s3://${{ inputs.s3_bucket_name }}/${{ github.sha }}/
   
   deploy:
     name: Trigger CodeDeploy Deployment
@@ -86,26 +101,10 @@ jobs:
             --type "String" \
             --overwrite
 
-      - name: Get latest ECS task definition
-        id: taskdef
-        run: |
-          FAMILY_NAME="${{ inputs.ecs_task_definition }}"
-          TASK_DEF_ARN=$(aws ecs describe-task-definition \
-            --task-definition $FAMILY_NAME \
-            --query "taskDefinition.taskDefinitionArn" \
-            --output text)
-          
-          echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
-
-      - name: Render appspec.yaml using yq
-        run: |
-          yq -i ".Resources.0.TargetService.Properties.TaskDefinition = \"$TASK_DEF_ARN\"" appspec.yaml
-          cat appspec.yaml
-
       - name: Trigger CodeDeploy deployment
         run: |
           aws deploy create-deployment \
             --application-name ${{ inputs.code_deploy_app_name }} \
             --deployment-group-name ${{ inputs.code_deploy_deployment_group }} \
-            --revision revisionType=AppSpecContent,appSpecContent={content="$(base64 -w 0 appspec.yaml)"}
+            --s3-location bucket=${{ inputs.s3_bucket_name }},key=${{ github.sha }}/appspec.yaml,bundleType=YAML
 
