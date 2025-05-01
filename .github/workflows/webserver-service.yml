@@ -8,6 +8,10 @@ on:
     paths:
       - services/webserver/**
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   staging:
     uses: ./.github/workflows/staging.yaml
