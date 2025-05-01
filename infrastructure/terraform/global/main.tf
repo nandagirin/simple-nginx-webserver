@@ -51,8 +51,8 @@ module "iam_github_oidc_provider" {
   version = "~> 5.0"
 }
 
-resource "aws_iam_policy" "s3_deploy_policy" {
-  name = "GitHubActionsS3DeployPolicy"
+resource "aws_iam_policy" "s3_push_policy" {
+  name = "GitHubActionsS3PushPolicy"
 
   policy = jsonencode({
     Version = "2012-10-17",
@@ -74,16 +74,55 @@ resource "aws_iam_policy" "s3_deploy_policy" {
   })
 }
 
+resource "aws_iam_policy" "ssm_update_policy" {
+  name = "GitHubActionsSSMUpdatePolicy"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "ssm:PutParameter"
+        ],
+        Resource = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_policy" "code_deploy_policy" {
+  name = "GitHubActionsCodeDeployPolicy"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "codedeploy:CreateDeployment",
+          "codedeploy:GetDeployment",
+          "codedeploy:GetDeploymentGroup",
+          "codedeploy:GetApplication",
+          "codedeploy:RegisterApplicationRevision",
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
 
 module "iam_github_oidc_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-github-oidc-role"
   version = "~> 5.0"
 
-  name = "GitHubActionsRole"
+  name     = "GitHubActionsRole"
   subjects = ["nandagirin/simple-nginx-webserver:*"]
 
   policies = {
-    GitHubActionsS3DeployPolicy = aws_iam_policy.s3_deploy_policy.arn
+    GitHubActionsS3PushPolicy     = aws_iam_policy.s3_push_policy.arn
+    GitHubActionsSSMUpdatePolicy  = aws_iam_policy.ssm_update_policy.arn
+    GitHubActionsCodeDeployPolicy = aws_iam_policy.code_deploy_policy.arn
   }
 
   tags = {
