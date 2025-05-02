@@ -445,4 +445,8 @@ resource "aws_ssm_parameter" "ssm_configs" {
   value     = each.value.value
   type      = lookup(each.value, "type", "String")
   overwrite = lookup(each.value, "overwrite", true)
+
+  lifecycle {
+    ignore_changes = [ name, value ]
+  }
 }
